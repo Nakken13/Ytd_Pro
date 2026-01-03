@@ -1,8 +1,7 @@
-# 📺 YouTube Downloader - Pro (YTD Pro)
+# 📺 YouTube Downloader - Pro
 
-**YTD Pro** est une application de bureau moderne et performante permettant de télécharger facilement des vidéos et des playlists entières depuis YouTube.
+**YTD Pro** est une application permettant de télécharger facilement des vidéos et des playlists entières depuis YouTube.
 
-![YTD Pro Interface](https://via.placeholder.com/700x550?text=YTD+Pro+Interface)
 
 ## 🚀 Fonctionnalités
 
