@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox
@@ -6,15 +7,29 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import yt_dlp
 
+
+def get_app_base_dir() -> str:
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+
+    utils_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.dirname(utils_dir)
+
+
+def get_resource_dir() -> str:
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
+
 class YoutubeApp:
     def __init__(self, root):
         self.root = root
         self.style = ttk.Style(theme="superhero")
-        
+
         self.root.title("YouTube Downloader - Pro")
         self.root.geometry("700x550")
         self.root.resizable(False, False)
-        
+
         self.is_downloading = False
         self.create_widgets()
 
@@ -110,18 +125,21 @@ class YoutubeApp:
 
     def download_logic(self, url, fmt):
         try:
-            script_folder = os.path.dirname(os.path.abspath(__file__))
-            parent_folder = os.path.dirname(script_folder)
-            target_folder = os.path.join(parent_folder, "playlist_&_videos")
-            
-            if not os.path.exists(target_folder): os.makedirs(target_folder)
+            base_dir = get_app_base_dir()
+            resource_dir = get_resource_dir()
+
+            target_folder = os.path.join(base_dir, "playlist_&_videos")
+            os.makedirs(target_folder, exist_ok=True)
 
             ydl_opts = {
-                'outtmpl': os.path.join(target_folder, '%(playlist_title)s/%(playlist_index)s - %(title)s.%(ext)s'),
-                'download_archive': os.path.join(script_folder, 'archive.txt'),
+                'outtmpl': os.path.join(
+                    target_folder,
+                    '%(playlist_title)s/%(playlist_index)s - %(title)s.%(ext)s'
+                ),
+                'download_archive': os.path.join(base_dir, 'archive.txt'),
                 'retries': 10,
                 'ignoreerrors': True,
-                'ffmpeg_location': script_folder,
+                'ffmpeg_location': resource_dir,
                 'quiet': True,
                 'no_warnings': True,
                 'progress_hooks': [self.progress_hook],
@@ -130,14 +148,21 @@ class YoutubeApp:
             if fmt == 'mp3':
                 ydl_opts.update({
                     'format': 'bestaudio/best',
-                    'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '192'}],
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192'
+                    }],
                 })
             else:
-                ydl_opts.update({'format': 'bestvideo+bestaudio/best', 'merge_output_format': 'mp4'})
+                ydl_opts.update({
+                    'format': 'bestvideo+bestaudio/best',
+                    'merge_output_format': 'mp4'
+                })
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
-            
+
             self.root.after(0, lambda: self.finish(True, f"Terminé !\nDossier : {target_folder}"))
 
         except Exception as e:
